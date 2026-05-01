@@ -9,6 +9,10 @@ let package = Package(
             name: "StandUpTimer",
             path: "Sources",
             exclude: ["Resources/Info.plist"],
+            resources: [
+                .process("Resources/Videos/neko1.png"),
+                .process("Resources/Videos/neko2.png")
+            ],
             linkerSettings: [
                 .unsafeFlags([
                     "-Xlinker", "-sectcreate",

@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct MenuBarView: View {
-    @Bindable var timer: TimerManager
-    @State private var showSettings = false
+    @ObservedObject var timer: TimerManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -38,9 +37,9 @@ struct MenuBarView: View {
             
             Divider()
             
-            // 设置按钮
+            // 设置按钮 — 用独立窗口打开
             Button("⚙ 设置") {
-                showSettings = true
+                SettingsWindowController.shared.show(timer: timer)
             }
             .padding(.horizontal)
             
@@ -53,8 +52,5 @@ struct MenuBarView: View {
             .padding(.horizontal)
         }
         .padding(.vertical, 8)
-        .sheet(isPresented: $showSettings) {
-            SettingsView(timer: timer)
-        }
     }
 }

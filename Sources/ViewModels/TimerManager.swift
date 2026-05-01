@@ -1,15 +1,17 @@
 import Foundation
-import SwiftUI
+import Combine
 
-@Observable
-class TimerManager {
-    var currentPhase: TimerPhase = .sitting
-    var timeRemaining: Int = 0
-    var isRunning: Bool = false
-    var showAlert: Bool = false
+class TimerManager: ObservableObject {
+    @Published var currentPhase: TimerPhase = .sitting
+    @Published var timeRemaining: Int = 0
+    @Published var isRunning: Bool = false
+    @Published var showAlert: Bool = false
     
     private var timer: Timer?
-    let settings: SettingsStore  // 改为 let，外部可访问
+    let settings: SettingsStore
+    
+    /// 标记正在重置中，防止 AlertObserver 误触发
+    private(set) var isResetting = false
     
     init(settings: SettingsStore) {
         self.settings = settings
@@ -23,6 +25,7 @@ class TimerManager {
     }
     
     func start() {
+        timer?.invalidate()
         isRunning = true
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
@@ -31,6 +34,7 @@ class TimerManager {
                 self.timeRemaining -= 1
             } else {
                 self.timer?.invalidate()
+                self.isRunning = false
                 self.showAlert = true
             }
         }
@@ -57,11 +61,18 @@ class TimerManager {
         nextPhase()
     }
     
+    /// 完全重置计时器（用于设置变更后）
     func reset() {
+        isResetting = true
         timer?.invalidate()
+        timer = nil
         isRunning = false
         currentPhase = .sitting
         timeRemaining = settings.duration(for: .sitting)
         showAlert = false
+        // 延迟清除标记，确保 Combine 事件已经处理完毕
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.isResetting = false
+        }
     }
 }
